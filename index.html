@@ -4,18 +4,88 @@
   <meta charset="UTF-8" />
   <title>💬 Discord Style Chat</title>
   <style>
-    body { font-family: Arial; margin: 0; padding: 0; background: #2f3136; color: #fff; display: flex; flex-direction: column; height: 100vh; }
-    h2 { text-align: center; margin: 16px 0; }
-    #chatBox { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; }
-    .message-group { display: flex; align-items: flex-start; margin-bottom: 15px; }
-    .profile-pic { width: 30px; height: 30px; border-radius: 50%; margin-left: 10px; }
-    .content { background: #40444b; padding: 10px; border-radius: 8px; max-width: 70%; }
-    .username { font-weight: bold; color: #00b0f4; margin-bottom: 5px; }
-    .timestamp { color: #999; font-size: 10px; margin-left: 5px; }
-    #inputArea { display: flex; padding: 10px; background: #36393f; }
-    #message { flex: 1; padding: 10px; border: none; border-radius: 8px; margin-right: 8px; font-size: 14px; resize: none; }
-    #sendBtn { padding: 10px 20px; border: none; border-radius: 8px; background: #5865f2; color: #fff; cursor: pointer; }
-    #auth { padding: 10px; text-align: center; background: #202225; }
+    body {
+      font-family: Arial;
+      margin: 0;
+      padding: 0;
+      background: #2f3136;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    #auth {
+      padding: 10px;
+      text-align: center;
+      background: #202225;
+    }
+    h2 {
+      text-align: center;
+      margin: 8px 0;
+    }
+    #chatBox {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .message-group {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .profile-pic {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    .content {
+      display: flex;
+      flex-direction: column;
+      max-width: 75%;
+    }
+    .username {
+      font-weight: bold;
+      color: #00b0f4;
+      margin-right: 6px;
+    }
+    .timestamp {
+      color: #999;
+      font-size: 10px;
+      align-self: flex-end;
+    }
+    .message {
+      background: #40444b;
+      padding: 8px;
+      border-radius: 6px;
+      margin-top: 4px;
+      word-break: break-word;
+    }
+    #inputArea {
+      display: flex;
+      padding: 10px;
+      background: #36393f;
+    }
+    #message {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      margin-right: 8px;
+      font-size: 14px;
+      resize: none;            /* 크기 고정 */
+      height: 40px;            /* 고정 높이 */
+    }
+    #sendBtn {
+      padding: 0 16px;
+      border: none;
+      border-radius: 6px;
+      background: #5865f2;
+      color: #fff;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -33,6 +103,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
   <script>
+    // 1) Firebase 초기화
     const firebaseConfig = {
       apiKey: "AIzaSyA6C9AQ1kUtxTILR6v8mmlQkuz9UTHjHv0",
       authDomain: "notion-chat-c7ff1.firebaseapp.com",
@@ -41,18 +112,18 @@
       messagingSenderId: "1052307211297",
       appId: "1:1052307211297:web:aa81f9649cf607202c8f60"
     };
-
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // 2) DOM 참조
     const authDiv = document.getElementById('auth');
     const chatBox = document.getElementById('chatBox');
     const inputArea = document.getElementById('inputArea');
     const messageField = document.getElementById('message');
 
+    // 3) 로그인 상태 유지
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-
     auth.onAuthStateChanged(user => {
       if (user) {
         authDiv.innerHTML = `<p>👤 ${user.displayName} <button onclick="logout()">Logout</button></p>`;
@@ -68,57 +139,75 @@
       const provider = new firebase.auth.GoogleAuthProvider();
       auth.signInWithPopup(provider);
     }
-
     function logout() {
       auth.signOut();
     }
 
+    // 4) 메시지 보내기 (엔터키 전송 포함)
     function sendMessage() {
-      const message = messageField.value.trim();
-      if (!message) return;
-
+      const text = messageField.value.trim();
+      if (!text) return;
       const user = auth.currentUser;
       db.collection("messages").add({
         userName: user.displayName,
         userPhoto: user.photoURL,
-        message: message,
+        message: text,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
       }).then(() => {
         messageField.value = '';
-        messageField.style.height = 'auto';
       });
     }
-
-    messageField.addEventListener('keydown', function(e) {
+    messageField.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
       }
     });
 
-    function formatTime(timestamp) {
-      if (!timestamp) return '';
-      const date = timestamp.toDate();
-      return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
-    }
-
+    // 5) 메시지 로드 & 그룹핑
     function loadMessages() {
       db.collection("messages").orderBy("timestamp")
-        .onSnapshot(snapshot => {
-          chatBox.innerHTML = '';
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            const time = formatTime(data.timestamp);
-            chatBox.innerHTML += `
-              <div class="message-group">
-                <div class="content">
-                  <div><span class="username">${data.userName}</span><span class="timestamp">${time}</span></div>
-                  <div>${data.message}</div>
-                </div>
-                <img class="profile-pic" src="${data.userPhoto}" alt="Profile">
-              </div>`;
+        .onSnapshot(snap => {
+          // 스냅샷으로 그룹 배열 만들기
+          const groups = [];
+          snap.forEach(doc => {
+            const d = doc.data();
+            const ts = d.timestamp ? d.timestamp.toDate() : new Date();
+            const hh = ts.getHours();
+            const mm = ts.getMinutes().toString().padStart(2, '0');
+            const time = `${hh}:${mm}`;
+            const key = `${d.userName}|${time}`;
+
+            if (groups.length && groups[groups.length-1].key === key) {
+              groups[groups.length-1].messages.push(d.message);
+            } else {
+              groups.push({
+                key,
+                userName: d.userName,
+                userPhoto: d.userPhoto,
+                time,
+                messages: [d.message]
+              });
+            }
           });
 
+          // HTML 렌더링
+          chatBox.innerHTML = '';
+          groups.forEach(g => {
+            let html = `
+              <div class="message-group">
+                <img class="profile-pic" src="${g.userPhoto}" alt="Profile">
+                <div class="content">
+                  <div>
+                    <span class="username">${g.userName}</span>
+                    <span class="timestamp">${g.time}</span>
+                  </div>`;
+            g.messages.forEach(msg =>
+              html += `<div class="message">${msg}</div>`
+            );
+            html += `</div></div>`;
+            chatBox.innerHTML += html;
+          });
           chatBox.scrollTop = chatBox.scrollHeight;
         });
     }

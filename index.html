@@ -2,27 +2,95 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>💬 Discord Style Chat</title>
+  <title>🔐 Login to Chat</title>
   <style>
+    /* ─── 테마 변수 ───────────────────────────────────────── */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary:  #2f3136;
+        --bg-secondary:#202225;
+        --bg-chat:     #36393f;
+        --text-primary:#ffffff;
+        --text-secondary:#999999;
+        --accent:      #5865f2;
+        --line:        #40444b;
+        --date-line:   #4f545c;
+      }
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg-primary:   #f8f9fa;
+        --bg-secondary: #ffffff;
+        --bg-chat:      #ebeced;
+        --text-primary: #000000;
+        --text-secondary:#555555;
+        --accent:       #4a9af9;
+        --line:         #dddddd;
+        --date-line:    #cccccc;
+      }
+    }
+
+    /* ─── 글로벌 ────────────────────────────────────────── */
+    * { box-sizing: border-box; margin:0; padding:0; }
     body {
-      font-family: Arial;
-      margin: 0;
-      padding: 0;
-      background: #2f3136;
-      color: #fff;
       display: flex;
       flex-direction: column;
       height: 100vh;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: Arial, sans-serif;
     }
-    #auth {
+
+    /* ─── 로그인 화면 ─────────────────────────────────── */
+    #loginScreen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: var(--bg-primary);
+    }
+    #loginBtn {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      padding: 15px 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+    #loginScreen p {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    /* ─── 채팅 앱 전체 ─────────────────────────────────── */
+    #chatApp {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      background: var(--bg-primary);
+    }
+
+    /* ─── 상단 사용자/로그아웃 ─────────────────────────── */
+    .auth-area {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
       padding: 10px;
-      text-align: center;
-      background: #202225;
+      background: var(--bg-secondary);
     }
-    h2 {
-      text-align: center;
-      margin: 8px 0;
+    #logoutBtn {
+      background: none;
+      border: none;
+      color: #ff5555;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 12px;
     }
+
+    /* ─── 메시지 박스 ─────────────────────────────────── */
     #chatBox {
       flex: 1;
       overflow-y: auto;
@@ -30,6 +98,31 @@
       display: flex;
       flex-direction: column;
     }
+
+    /* 날짜 구분선 */
+    .date-separator {
+      position: relative;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .date-separator::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 5%;
+      right: 5%;
+      height: 1px;
+      background: var(--date-line);
+    }
+    .date-separator span {
+      position: relative;
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      padding: 0 8px;
+      font-size: 12px;
+    }
+
+    /* ─── 메시지 그룹 ─────────────────────────────────── */
     .message-group {
       display: flex;
       align-items: flex-start;
@@ -48,25 +141,30 @@
     }
     .username {
       font-weight: bold;
-      color: #00b0f4;
+      color: var(--accent);
       margin-right: 6px;
     }
     .timestamp {
-      color: #999;
+      color: var(--text-secondary);
       font-size: 10px;
       align-self: flex-end;
     }
     .message {
-      background: #40444b;
+      background: var(--bg-chat);
       padding: 8px;
       border-radius: 6px;
       margin-top: 4px;
       word-break: break-word;
+      color: var(--text-primary);
+      font-size: 14px;
     }
+
+    /* ─── 입력창 ─────────────────────────────────────── */
     #inputArea {
       display: flex;
+      align-items: center;       /* 수직 가운데 정렬 */
       padding: 10px;
-      background: #36393f;
+      background: var(--bg-chat);
     }
     #message {
       flex: 1;
@@ -74,143 +172,45 @@
       border: none;
       border-radius: 6px;
       margin-right: 8px;
-      font-size: 14px;
-      resize: none;            /* 크기 고정 */
-      height: 40px;            /* 고정 높이 */
+      font-size: 16px;           /* 폰트 키움 */
+      resize: none;
+      height: 40px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
     }
     #sendBtn {
       padding: 0 16px;
       border: none;
       border-radius: 6px;
-      background: #5865f2;
+      background: var(--accent);
       color: #fff;
       cursor: pointer;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
-  <div id="auth"></div>
-  <h2>💬 Real-Time Chat</h2>
-  <div id="chatBox"></div>
-  <div id="inputArea" style="display:none;">
-    <textarea id="message" placeholder="Type a message..." rows="1"></textarea>
-    <button id="sendBtn" onclick="sendMessage()">Send</button>
+
+  <!-- 로그인 화면 -->
+  <div id="loginScreen">
+    <button id="loginBtn">Login with Google</button>
+    <p>로그인 후에만 채팅을 이용할 수 있습니다</p>
+  </div>
+
+  <!-- 실제 채팅 앱 -->
+  <div id="chatApp">
+    <div class="auth-area" id="auth"></div>
+    <div id="chatBox"></div>
+    <div id="inputArea">
+      <textarea id="message" placeholder="메시지를 입력하세요..." rows="1"></textarea>
+      <button id="sendBtn">Send</button>
+    </div>
   </div>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
-  <script>
-    // 1) Firebase 초기화
-    const firebaseConfig = {
-      apiKey: "AIzaSyA6C9AQ1kUtxTILR6v8mmlQkuz9UTHjHv0",
-      authDomain: "notion-chat-c7ff1.firebaseapp.com",
-      projectId: "notion-chat-c7ff1",
-      storageBucket: "notion-chat-c7ff1.appspot.com",
-      messagingSenderId: "1052307211297",
-      appId: "1:1052307211297:web:aa81f9649cf607202c8f60"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    // 2) DOM 참조
-    const authDiv = document.getElementById('auth');
-    const chatBox = document.getElementById('chatBox');
-    const inputArea = document.getElementById('inputArea');
-    const messageField = document.getElementById('message');
-
-    // 3) 로그인 상태 유지
-    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        authDiv.innerHTML = `<p>👤 ${user.displayName} <button onclick="logout()">Logout</button></p>`;
-        inputArea.style.display = 'flex';
-        loadMessages();
-      } else {
-        authDiv.innerHTML = `<button onclick="login()">Login with Google</button>`;
-        inputArea.style.display = 'none';
-      }
-    });
-
-    function login() {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider);
-    }
-    function logout() {
-      auth.signOut();
-    }
-
-    // 4) 메시지 보내기 (엔터키 전송 포함)
-    function sendMessage() {
-      const text = messageField.value.trim();
-      if (!text) return;
-      const user = auth.currentUser;
-      db.collection("messages").add({
-        userName: user.displayName,
-        userPhoto: user.photoURL,
-        message: text,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      }).then(() => {
-        messageField.value = '';
-      });
-    }
-    messageField.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
-
-    // 5) 메시지 로드 & 그룹핑
-    function loadMessages() {
-      db.collection("messages").orderBy("timestamp")
-        .onSnapshot(snap => {
-          // 스냅샷으로 그룹 배열 만들기
-          const groups = [];
-          snap.forEach(doc => {
-            const d = doc.data();
-            const ts = d.timestamp ? d.timestamp.toDate() : new Date();
-            const hh = ts.getHours();
-            const mm = ts.getMinutes().toString().padStart(2, '0');
-            const time = `${hh}:${mm}`;
-            const key = `${d.userName}|${time}`;
-
-            if (groups.length && groups[groups.length-1].key === key) {
-              groups[groups.length-1].messages.push(d.message);
-            } else {
-              groups.push({
-                key,
-                userName: d.userName,
-                userPhoto: d.userPhoto,
-                time,
-                messages: [d.message]
-              });
-            }
-          });
-
-          // HTML 렌더링
-          chatBox.innerHTML = '';
-          groups.forEach(g => {
-            let html = `
-              <div class="message-group">
-                <img class="profile-pic" src="${g.userPhoto}" alt="Profile">
-                <div class="content">
-                  <div>
-                    <span class="username">${g.userName}</span>
-                    <span class="timestamp">${g.time}</span>
-                  </div>`;
-            g.messages.forEach(msg =>
-              html += `<div class="message">${msg}</div>`
-            );
-            html += `</div></div>`;
-            chatBox.innerHTML += html;
-          });
-          chatBox.scrollTop = chatBox.scrollHeight;
-        });
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>

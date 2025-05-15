@@ -1,11 +1,12 @@
 // 📌 Replace with your Firebase Config ↓↓↓
+
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID"
+  apiKey: "AIzaSyA6C9AQ1kUtxTILR6v8mmlQkuz9UTHjHv0",
+  authDomain: "notion-chat-c7ff1.firebaseapp.com",
+  projectId: "notion-chat-c7ff1",
+  storageBucket: "notion-chat-c7ff1.firebasestorage.app",
+  messagingSenderId: "1052307211297",
+  appId: "1:1052307211297:web:aa81f9649cf607202c8f60"
 };
 
 firebase.initializeApp(firebaseConfig);
